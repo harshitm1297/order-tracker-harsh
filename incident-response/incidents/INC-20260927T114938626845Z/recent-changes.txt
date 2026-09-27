@@ -1,0 +1,2 @@
+72de447 (HEAD -> main, origin/main, origin/HEAD) Simplify local Compose startup
+9f61e92 Add order tracker starter

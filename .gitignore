@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 data/
 .env
+.uv-cache/
+incident-response/incidents/*/agent-events.jsonl
+incident-response/incidents/*/agent-stderr.txt
+# Local dry runs superseded by the retained official test and real incident.
+incident-response/incidents/INC-20260927T114228416174Z/
+incident-response/incidents/INC-20260927T114619646579Z/
+incident-response/incidents/INC-20260927T114738364674Z/

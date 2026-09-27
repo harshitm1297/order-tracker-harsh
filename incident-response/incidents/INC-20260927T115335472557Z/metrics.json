@@ -1,0 +1,7 @@
+{
+  "query": "sum by (http_response_status_code) (increase(order_tracker_order_lookups_total[5m]))",
+  "result": {
+    "available": false,
+    "error": "URLError: <urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+  }
+}

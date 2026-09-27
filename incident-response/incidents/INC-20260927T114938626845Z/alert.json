@@ -1,0 +1,22 @@
+{
+  "alerts": [
+    {
+      "annotations": {
+        "description": "5xx threshold exceeded for the order detail route",
+        "summary": "Order lookup returned HTTP 500"
+      },
+      "generatorURL": "http://127.0.0.1:3000/alerting/list",
+      "labels": {
+        "alertname": "OrderTrackerOrderLookup5xx",
+        "allow_fix": "true",
+        "endpoint": "http://127.0.0.1:8000/api/orders/express-1002",
+        "service": "order-tracker",
+        "severity": "critical"
+      },
+      "startsAt": "2026-09-27T11:49:38.5592852Z",
+      "status": "firing"
+    }
+  ],
+  "receiver": "order-tracker-responder",
+  "status": "firing"
+}

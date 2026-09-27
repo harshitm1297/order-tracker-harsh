@@ -1,0 +1,70 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (http_response_status_code) (rate(order_tracker_order_lookups_total[1m]))",
+          "legendFormat": "HTTP {{http_response_status_code}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Order lookup request rate by status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(increase(order_tracker_order_lookups_total{http_response_status_code=~\"5..\"}[5m]))",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "5xx lookups in the last five minutes",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "loki", "uid": "loki"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {"dedupStrategy": "none", "enableLogDetails": true, "showLabels": false, "showTime": true, "sortOrder": "Descending"},
+      "targets": [{"expr": "{service_name=\"order-tracker\"} | json", "refId": "A"}],
+      "title": "Order Tracker structured logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {"type": "tempo", "uid": "tempo"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "targets": [{"query": "{ resource.service.name = \"order-tracker\" && name = \"orders.lookup\" }", "queryType": "traceql", "refId": "A"}],
+      "title": "Order lookup traces",
+      "type": "traces"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["order-tracker", "homework-4"],
+  "templating": {"list": []},
+  "time": {"from": "now-15m", "to": "now"},
+  "timezone": "browser",
+  "title": "Order Tracker Observability",
+  "uid": "order-tracker-overview",
+  "version": 1
+}

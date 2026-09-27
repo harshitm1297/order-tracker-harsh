@@ -1,0 +1,6 @@
+{
+  "incident_id": "INC-20260927T114938626845Z",
+  "state": "completed",
+  "sandbox": "workspace-write",
+  "final_line": "The express-order lookup failed because invalid month-end date replacement was used instead of two-day timedelta arithmetic."
+}

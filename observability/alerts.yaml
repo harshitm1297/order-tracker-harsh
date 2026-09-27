@@ -1,0 +1,69 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Order Tracker user impact
+    folder: Order Tracker
+    interval: 10s
+    rules:
+      - uid: order-tracker-lookup-5xx
+        title: OrderTrackerOrderLookup5xx
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 60, to: 0}
+            datasourceUid: prometheus
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              editorMode: code
+              expr: 'sum(increase(order_tracker_order_lookups_total{http_response_status_code=~"5.."}[1m]))'
+              instant: true
+              intervalMs: 1000
+              legendFormat: 5xx lookups
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [], type: gt}
+                  operator: {type: and}
+                  query: {params: [B]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: B
+              refId: C
+              type: threshold
+        dashboardUid: order-tracker-overview
+        panelId: 2
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: Order lookup returned a server error
+          description: The order lookup endpoint produced at least one 5xx response during the last minute.
+          endpoint: /api/orders/{order_id}
+          time_window: 1m
+          dashboard_url: http://localhost:3000/d/order-tracker-overview/order-tracker-observability
+        labels:
+          service: order-tracker
+          environment: homework
+          endpoint: /api/orders/{order_id}
+          allow_fix: "true"
+        isPaused: false

@@ -7,7 +7,10 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
+
+from app.telemetry import configure_telemetry, lookup_attributes
 
 
 DB_PATH = Path(os.getenv("ORDER_DB_PATH", "data/orders.db"))
@@ -55,7 +58,7 @@ def order_detail(row):
     order = as_dict(row)
     if order["priority"] == "express":
         placed_at = datetime.fromisoformat(order["created_at"])
-        estimated_at = placed_at.replace(day=placed_at.day + 2)
+        estimated_at = placed_at + timedelta(days=2)
         order["estimated_delivery"] = estimated_at.date().isoformat()
     return order
 
@@ -77,6 +80,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Order Tracker", lifespan=lifespan)
+telemetry = configure_telemetry(app)
 
 
 @app.get("/")
@@ -100,11 +104,38 @@ def list_orders():
 
 @app.get("/api/orders/{order_id}")
 def get_order(order_id: str):
-    with connect() as db:
-        row = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-    if row is None:
-        raise HTTPException(404, "Order not found")
-    return order_detail(row)
+    with telemetry.tracer.start_as_current_span("orders.lookup") as span:
+        priority = "unknown"
+        try:
+            with connect() as db:
+                row = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+            if row is None:
+                attributes = lookup_attributes(404, "not_found")
+                telemetry.lookup_counter.add(1, attributes)
+                telemetry.logger.warning("order_lookup_not_found", extra=attributes)
+                span.set_attribute("http.response.status_code", 404)
+                raise HTTPException(404, "Order not found")
+
+            priority = row["priority"]
+            result = order_detail(row)
+            attributes = lookup_attributes(200, "success", priority)
+            telemetry.lookup_counter.add(1, attributes)
+            telemetry.logger.info("order_lookup_succeeded", extra=attributes)
+            span.set_attributes(attributes)
+            return result
+        except HTTPException:
+            raise
+        except Exception as exc:
+            attributes = lookup_attributes(500, "error", priority)
+            telemetry.lookup_counter.add(1, attributes)
+            telemetry.logger.exception(
+                "order_lookup_failed",
+                extra={**attributes, "error.type": type(exc).__name__},
+            )
+            span.set_attributes(attributes)
+            span.record_exception(exc)
+            span.set_status(Status(StatusCode.ERROR, str(exc)))
+            raise
 
 
 @app.post("/api/orders", status_code=201)

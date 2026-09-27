@@ -1,5 +1,10 @@
+import os
+from datetime import datetime, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
+
+os.environ.setdefault("OTEL_EXPORTER_MODE", "none")
 
 from app import main
 
@@ -33,3 +38,17 @@ def test_create_and_update_order(client):
 
 def test_missing_order(client):
     assert client.get("/api/orders/missing").status_code == 404
+
+
+def test_express_order_lookup_across_month_boundary(client):
+    seeded_order = next(
+        order for order in client.get("/api/orders").json()
+        if order["id"] == "express-1002"
+    )
+
+    response = client.get("/api/orders/express-1002")
+
+    assert response.status_code == 200
+    assert response.json()["estimated_delivery"] == (
+        datetime.fromisoformat(seeded_order["created_at"]) + timedelta(days=2)
+    ).date().isoformat()

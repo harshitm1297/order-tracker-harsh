@@ -1,0 +1,24 @@
+version: 1
+default: read-only
+
+rules:
+  - name: acknowledge-test-alert
+    when:
+      labels.test: "true"
+    sandbox: read-only
+    allowed_actions: [none, escalate]
+
+  - name: repair-known-homework-incident
+    when:
+      status: firing
+      labels.alertname: OrderTrackerOrderLookup5xx
+      labels.allow_fix: "true"
+    sandbox: workspace-write
+    allowed_actions: [fix, escalate]
+    forbidden_actions: [commit, push, deploy, restart, credential-access]
+
+evidence_queries:
+  prometheus: [order-lookup-status-counts-last-5m]
+  loki: [order-lookup-logs-last-15m]
+  tempo: [failed-order-lookup-traces-last-15m]
+  git: [last-5-commits]

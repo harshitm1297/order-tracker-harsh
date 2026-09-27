@@ -1,0 +1,7 @@
+{
+  "query": "{service_name=\"order-tracker\"} |= \"order_lookup\"",
+  "result": {
+    "available": false,
+    "error": "URLError: <urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+  }
+}
